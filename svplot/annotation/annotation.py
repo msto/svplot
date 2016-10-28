@@ -63,7 +63,7 @@ def _patch_center(patch, orient='v'):
 
 def _bar_end_midpoint(patch, ax, orient='v'):
     """
-    Coordinates of midpoint of bar's end
+    Coordinates of midpoint of bar's end. Scaled to a (0, 1) axis.
 
     Parameters
     ----------
@@ -100,10 +100,10 @@ def _bar_end_midpoint(patch, ax, orient='v'):
     return xpos, ypos
 
 
-def add_count_label(ax, count=0, pct=False, as_pct=True,
-                    orient='v', loc='above', offset=0.01,
-                    color='black', palette=None,
-                    fontsize=11):
+def add_count_labels(ax, count=0, pct=False, as_pct=True,
+                     orient='v', loc='above', offset=0.01,
+                     color='black', palette=None,
+                     fontsize=11):
     """
     Add count labels to a bar or count plot.
 
@@ -126,9 +126,11 @@ def add_count_label(ax, count=0, pct=False, as_pct=True,
         Cycle of text label colors.
         Useful for situations where the bars are plotted with a `hue` attribute
         and the labels are plotted inside the bars.
+    kwargs : key, value mappings
+        Other keyword arguments are passed to ax.text
 
     TODO: add format string
-    TODO: handle percentages better
+    TODO: improve percentage handling
     """
 
     # Input validation
@@ -195,7 +197,8 @@ def add_count_label(ax, count=0, pct=False, as_pct=True,
                 label, color=color,
                 ha=ha, va=va,
                 fontsize=fontsize,
-                transform=ax.transAxes)
+                transform=ax.transAxes,
+                **kwargs)
 
 
 def add_comparison_bars(ax, p=None, orient='v',
