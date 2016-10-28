@@ -244,7 +244,10 @@ def add_comparison_bars(ax, p=None, orient='v',
 
     patch_pairs = zip(patches[0::2], patches[1::2])
 
-    for l_patch, r_patch in patch_pairs:
+    pval_offset = 0.01
+    fontsize = 12
+
+    for i, (l_patch, r_patch) in enumerate(patch_pairs):
         l_xpos, l_ypos = _bar_end_midpoint(l_patch, ax, orient)
         r_xpos, r_ypos = _bar_end_midpoint(r_patch, ax, orient)
 
@@ -262,6 +265,14 @@ def add_comparison_bars(ax, p=None, orient='v',
             ax.plot([l_xpos, r_xpos], [top_pos, top_pos],
                     'k-', transform=ax.transAxes, **kwargs)
 
+            if p is not None:
+                label = 'p={:.3f}'.format(p[i])
+                xpos = np.mean([l_xpos, r_xpos])
+                ypos = top_pos + pval_offset
+
+                ax.text(xpos, ypos, label, ha=ha, va=va, fontsize=fontsize,
+                        transform=ax.transAxes)
+
         else:
             max_val = max(l_xpos, r_xpos)
             top_pos = max_val + top_offset
@@ -275,3 +286,11 @@ def add_comparison_bars(ax, p=None, orient='v',
             # Plot crossbar
             ax.plot([top_pos, top_pos], [l_ypos, r_ypos],
                     'k-', transform=ax.transAxes, **kwargs)
+
+            if p is not None:
+                label = 'p={:.3f}'.format(p[i])
+                xpos = top_pos + pval_offset
+                ypos = np.mean([l_ypos, r_ypos])
+
+                ax.text(xpos, ypos, label, ha=ha, va=va, fontsize=fontsize,
+                        transform=ax.transAxes)
