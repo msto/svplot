@@ -32,14 +32,6 @@ def _patch_size(patch, orient='v'):
             return patch.get_width()
 
 
-# position relative to bar size (y for vertical, x for horizontal)
-# is transformed by axis. The position relative to categorical axis is
-# calculated without need for transformation, so we need to reverse
-# transform it before passing it to matplotlib
-def _reverse_transform(pos, ax_min, ax_max):
-    return (pos - ax_min) / (ax_max - ax_min)
-
-
 def _patch_center(patch, orient='v'):
     """
     Get coordinate of bar center
@@ -90,16 +82,20 @@ def _bar_end_midpoint(patch, ax, orient='v'):
     ax_width = xmax - xmin
     ax_height = ymax - ymin
 
+    # Transform position to a (0, 1) axis
+    def _ax_transform(pos, ax_min, ax_max):
+        return (pos - ax_min) / (ax_max - ax_min)
+
     if orient == 'v':
         xpos = _patch_center(patch, orient)
-        xpos = _reverse_transform(xpos, xmin, xmax)
+        xpos = _ax_transform(xpos, xmin, xmax)
 
         ypos = _patch_size(patch, orient) / ax_height
     else:
         xpos = _patch_size(patch, orient) / ax_width
 
         ypos = _patch_center(patch, orient)
-        ypos = _reverse_transform(ypos, ymin, ymax)
+        ypos = _ax_transform(ypos, ymin, ymax)
 
     return xpos, ypos
 
@@ -244,13 +240,13 @@ def add_comparison_bars(ax, orient='v', offset=0.01,
     # is transformed by axis. The position relative to categorical axis is
     # calculated without need for transformation, so we need to reverse
     # transform it before passing it to matplotlib
-    def _reverse_transform(pos, ax_min, ax_max):
+    def _ax_transform(pos, ax_min, ax_max):
         return (pos - ax_min) / (ax_max - ax_min)
 
     def _xpos(patch):
         if orient == 'v':
             xpos = _patch_center(patch, orient)
-            return _reverse_transform(xpos, xmin, xmax)
+            return _ax_transform(xpos, xmin, xmax)
         else:
             xpos = _patch_size(patch) / x_width
             xpos = xpos + offset
@@ -262,7 +258,7 @@ def add_comparison_bars(ax, orient='v', offset=0.01,
             ypos = ypos + offset
         else:
             ypos = _patch_center(patch, orient)
-            return _reverse_transform(ypos, ymin, ymax)
+            return _ax_transform(ypos, ymin, ymax)
 
     # sort by x position for palette cycling
     if orient == 'v':
