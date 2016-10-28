@@ -198,8 +198,9 @@ def add_count_label(ax, count=0, pct=False, as_pct=True,
                 transform=ax.transAxes)
 
 
-def add_comparison_bars(ax, orient='v', offset=0.01,
-                        color='black', palette=None):
+def add_comparison_bars(ax, p=None, orient='v',
+                        bar_offset=0.02, top_offset=0.1,
+                        color='black', **kwargs):
     """
     Add count labels to a bar or count plot.
 
@@ -207,16 +208,20 @@ def add_comparison_bars(ax, orient='v', offset=0.01,
     ----------
     ax : matplotlib Axes
         Axes object to annotate.
+    p : arraylike of float, optional
+        Pairwise p-values to annotate with
     orient : 'v' | 'h', optional
         Orientation of the plot (vertical or horizontal).
-    offset : float, optional
-        Offset of the label relative to the bar end. Scaled to a [0, 1] axis.
+    bar_offset : float, optional
+        Distance between bottom of comparison lines and top of bars.
+        Scaled to a (0, 1) axis.
+    top_offset : float, optional
+        Distance from bottom of upper comparison line to crossbar.
+        Scaled to a (0, 1) axis.
     color : matplotlib color, optional
         Text color.
-    palette : list of matplotlib colors or seaborn color palette, optional
-        Cycle of text label colors.
-        Useful for situations where the bars are plotted with a `hue` attribute
-        and the labels are plotted inside the bars.
+    kwargs : key, value mappings
+        Other keyword arguments are passed to ax.plot
     """
 
     # Input validation
@@ -231,63 +236,42 @@ def add_comparison_bars(ax, orient='v', offset=0.01,
         va = 'center'
         ha = 'left'
 
-    xmin, xmax = ax.get_xlim()
-    ymin, ymax = ax.get_ylim()
-    x_width = xmax - xmin
-    y_height = ymax - ymin
-
-    # position relative to bar size (y for vertical, x for horizontal)
-    # is transformed by axis. The position relative to categorical axis is
-    # calculated without need for transformation, so we need to reverse
-    # transform it before passing it to matplotlib
-    def _ax_transform(pos, ax_min, ax_max):
-        return (pos - ax_min) / (ax_max - ax_min)
-
-    def _xpos(patch):
-        if orient == 'v':
-            xpos = _patch_center(patch, orient)
-            return _ax_transform(xpos, xmin, xmax)
-        else:
-            xpos = _patch_size(patch) / x_width
-            xpos = xpos + offset
-            return xpos
-
-    def _ypos(patch):
-        if orient == 'v':
-            ypos = _patch_size(patch) / y_height
-            ypos = ypos + offset
-        else:
-            ypos = _patch_center(patch, orient)
-            return _ax_transform(ypos, ymin, ymax)
-
-    # sort by x position for palette cycling
+    # sort by x position for palette cycling and comparison bar pairing
     if orient == 'v':
         patches = sorted(ax.patches, key=lambda p: p.get_x())
     else:
         patches = sorted(ax.patches, key=lambda p: p.get_y())
 
-    for i, p in enumerate(patches):
-        value = _patch_size(p)
-        if np.isnan(value):
-            value = 0
+    patch_pairs = zip(patches[0::2], patches[1::2])
 
-        if pct:
-            if as_pct:
-                label = '%.1f%%' % (value * 100)
-                fontsize = fontsize
+    for l_patch, r_patch in patch_pairs:
+        l_xpos, l_ypos = _bar_end_midpoint(l_patch, ax, orient)
+        r_xpos, r_ypos = _bar_end_midpoint(r_patch, ax, orient)
 
-            else:
-                label = str(int(value * count))
-                fontsize = fontsize
+        if orient == 'v':
+            max_val = max(l_ypos, r_ypos)
+            top_pos = max_val + top_offset
+
+            # Plot vertical lines
+            ax.plot([l_xpos, l_xpos], [l_ypos + bar_offset, top_pos],
+                    'k-', transform=ax.transAxes, **kwargs)
+            ax.plot([r_xpos, r_xpos], [r_ypos + bar_offset, top_pos],
+                    'k-', transform=ax.transAxes, **kwargs)
+
+            # Plot crossbar
+            ax.plot([l_xpos, r_xpos], [top_pos, top_pos],
+                    'k-', transform=ax.transAxes, **kwargs)
+
         else:
-            label = str(int(value))
-            fontsize = fontsize
+            max_val = max(l_xpos, r_xpos)
+            top_pos = max_val + top_offset
 
-        if palette is not None:
-            color = palette[i % len(palette)]
+            # Plot vertical lines
+            ax.plot([l_xpos + bar_offset, top_pos], [l_ypos, l_ypos],
+                    'k-', transform=ax.transAxes, **kwargs)
+            ax.plot([r_xpos + bar_offset, top_pos], [r_ypos, r_ypos],
+                    'k-', transform=ax.transAxes, **kwargs)
 
-        print(i, label)
-        ax.text(_xpos(p), _ypos(p),
-                label, color=color,
-                ha=ha, va=va,
-                fontsize=fontsize, transform=ax.transAxes)
+            # Plot crossbar
+            ax.plot([top_pos, top_pos], [l_ypos, r_ypos],
+                    'k-', transform=ax.transAxes, **kwargs)
