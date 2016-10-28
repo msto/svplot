@@ -200,6 +200,7 @@ def add_count_label(ax, count=0, pct=False, as_pct=True,
 
 def add_comparison_bars(ax, p=None, orient='v',
                         bar_offset=0.02, top_offset=0.1,
+                        fontsize=12, pval_offset=0.01,
                         color='black', **kwargs):
     """
     Add count labels to a bar or count plot.
@@ -218,6 +219,10 @@ def add_comparison_bars(ax, p=None, orient='v',
     top_offset : float, optional
         Distance from bottom of upper comparison line to crossbar.
         Scaled to a (0, 1) axis.
+    fontsize : int, optional
+        p-value label font size
+    pval_offset : float, optional
+        Distance between p-value label and crossbar. Scaled to a (0, 1) axis.
     color : matplotlib color, optional
         Text color.
     kwargs : key, value mappings
@@ -244,9 +249,6 @@ def add_comparison_bars(ax, p=None, orient='v',
 
     patch_pairs = zip(patches[0::2], patches[1::2])
 
-    pval_offset = 0.01
-    fontsize = 12
-
     for i, (l_patch, r_patch) in enumerate(patch_pairs):
         l_xpos, l_ypos = _bar_end_midpoint(l_patch, ax, orient)
         r_xpos, r_ypos = _bar_end_midpoint(r_patch, ax, orient)
@@ -265,14 +267,6 @@ def add_comparison_bars(ax, p=None, orient='v',
             ax.plot([l_xpos, r_xpos], [top_pos, top_pos],
                     'k-', transform=ax.transAxes, **kwargs)
 
-            if p is not None:
-                label = 'p={:.3f}'.format(p[i])
-                xpos = np.mean([l_xpos, r_xpos])
-                ypos = top_pos + pval_offset
-
-                ax.text(xpos, ypos, label, ha=ha, va=va, fontsize=fontsize,
-                        transform=ax.transAxes)
-
         else:
             max_val = max(l_xpos, r_xpos)
             top_pos = max_val + top_offset
@@ -287,10 +281,16 @@ def add_comparison_bars(ax, p=None, orient='v',
             ax.plot([top_pos, top_pos], [l_ypos, r_ypos],
                     'k-', transform=ax.transAxes, **kwargs)
 
-            if p is not None:
-                label = 'p={:.3f}'.format(p[i])
+        # Add p-value annotations
+        if p is not None:
+            label = 'p={:.3f}'.format(p[i])
+
+            if orient == 'v':
+                xpos = np.mean([l_xpos, r_xpos])
+                ypos = top_pos + pval_offset
+            else:
                 xpos = top_pos + pval_offset
                 ypos = np.mean([l_ypos, r_ypos])
 
-                ax.text(xpos, ypos, label, ha=ha, va=va, fontsize=fontsize,
-                        transform=ax.transAxes)
+            ax.text(xpos, ypos, label, ha=ha, va=va, fontsize=fontsize,
+                    transform=ax.transAxes)
