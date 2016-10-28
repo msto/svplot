@@ -13,6 +13,7 @@ import itertools as it
 
 
 def add_count_label(ax, count, pct=False, as_pct=True, horiz=False,
+                    fmt='{val}',
                     orient='v', loc='above', offset=0.01,
                     color='black', palette=None,
                     fontsize=11):
@@ -30,6 +31,8 @@ def add_count_label(ax, count, pct=False, as_pct=True, horiz=False,
         - above: Labels will be plotted above the top each bar
         - inside: Labels will be plotted inside each bar, at the top
         - base: Labels will be plotted at the base of each bar
+    fmt : str, optional
+        Format string that takes a single numeric argument
     offset : float, optional
         Offset of the label relative to the bar end. Scaled to a [0, 1] axis.
     color : matplotlib color, optional
@@ -50,12 +53,16 @@ def add_count_label(ax, count, pct=False, as_pct=True, horiz=False,
     # Constants
     if orient == 'v':
         ha = 'center'
+        if loc == 'above' or loc == 'base':
+            va = 'bottom'
+        else:
+            va = 'top'
     else:
-        ha = 'left'
-    if loc == 'above' or loc == 'base':
-        va = 'bottom'
-    else:
-        va = 'top'
+        va = 'center'
+        if loc == 'above' or loc == 'base':
+            ha = 'left'
+        else:
+            ha = 'right'
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
     x_width = xmax - xmin
@@ -90,6 +97,14 @@ def add_count_label(ax, count, pct=False, as_pct=True, horiz=False,
             width = patch.get_width()
             xpos = x + width / 2
             return _reverse_transform(xpos, xmin, xmax)
+        else:
+            xpos = _patch_size(patch) / x_width
+
+            if loc == 'above' or loc == 'base':
+                xpos = xpos + offset
+            else:
+                xpos = xpos - offset
+            return xpos
         #  else:
         #  if pct:
         #  x_pos = lambda p, max_height: _label_offset(p) + .03 * max_height
@@ -108,25 +123,32 @@ def add_count_label(ax, count, pct=False, as_pct=True, horiz=False,
             return ypos
             #  return _patch_size(patch) + .01 * max_height
         else:
-            return patch.get_y() + 3 * patch.get_height() / 4.0
+            y = patch.get_y()
+            height = patch.get_height()
+            ypos = y + height / 2
+            return _reverse_transform(ypos, ymin, ymax)
+            #  return patch.get_y() + 3 * patch.get_height() / 4.0
 
     # sort by x position for palette cycling
-    patches = sorted(ax.patches, key=lambda p: p.get_x())
+    if orient == 'v':
+        patches = sorted(ax.patches, key=lambda p: p.get_x())
+    else:
+        patches = sorted(ax.patches, key=lambda p: p.get_y())
     for i, p in enumerate(patches):
-        count = _patch_size(p)
-        if np.isnan(count):
-            count = 0
+        value = _patch_size(p)
+        if np.isnan(value):
+            value = 0
 
         if pct:
             if as_pct:
-                label = '%.1f%%' % (height * 100)
+                label = '%.1f%%' % (value * 100)
                 fontsize = fontsize
 
             else:
-                label = str(int(height * count))
+                label = str(int(value * count))
                 fontsize = fontsize
         else:
-            label = str(int(height))
+            label = str(int(value))
             fontsize = fontsize
 
         if palette is not None:
