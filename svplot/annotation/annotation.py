@@ -12,8 +12,7 @@ import numpy as np
 import itertools as it
 
 
-def add_count_label(ax, count, pct=False, as_pct=True, horiz=False,
-                    fmt='{val}',
+def add_count_label(ax, count=0, pct=False, as_pct=True,
                     orient='v', loc='above', offset=0.01,
                     color='black', palette=None,
                     fontsize=11):
@@ -26,13 +25,11 @@ def add_count_label(ax, count, pct=False, as_pct=True, horiz=False,
         Axes object to annotate.
     orient : 'v' | 'h', optional
         Orientation of the plot (vertical or horizontal).
-    loc : 'above' | 'inside' | 'base', optional
+    loc : 'above' | 'inside', optional
         Position of text labels.
         - above: Labels will be plotted above the top each bar
         - inside: Labels will be plotted inside each bar, at the top
-        - base: Labels will be plotted at the base of each bar
-    fmt : str, optional
-        Format string that takes a single numeric argument
+        - TODO: base: Labels will be plotted at the base of each bar
     offset : float, optional
         Offset of the label relative to the bar end. Scaled to a [0, 1] axis.
     color : matplotlib color, optional
@@ -41,13 +38,16 @@ def add_count_label(ax, count, pct=False, as_pct=True, horiz=False,
         Cycle of text label colors.
         Useful for situations where the bars are plotted with a `hue` attribute
         and the labels are plotted inside the bars.
+
+    TODO: add format string
+    TODO: handle percentages better
     """
 
     # Input validation
     if orient not in 'v h'.split():
         raise Exception("Orientation must be 'v' or 'h'")
-    if loc not in 'above inside base'.split():
-        msg = "Loc must be one of 'above', 'inside', 'base'"
+    if loc not in 'above inside'.split():
+        msg = "Loc must be one of 'above', 'inside'"
         raise Exception(msg)
 
     # Constants
@@ -134,6 +134,7 @@ def add_count_label(ax, count, pct=False, as_pct=True, horiz=False,
         patches = sorted(ax.patches, key=lambda p: p.get_x())
     else:
         patches = sorted(ax.patches, key=lambda p: p.get_y())
+
     for i, p in enumerate(patches):
         value = _patch_size(p)
         if np.isnan(value):
