@@ -103,9 +103,11 @@ def _bar_end_midpoint(patch, ax, orient='v'):
 def add_count_labels(ax, count=0, pct=False, as_pct=True,
                      orient='v', loc='above', offset=0.01,
                      color='black', palette=None,
-                     fontsize=11):
+                     fontsize=11, **kwargs):
     """
     Add count labels to a bar or count plot.
+
+    NOTE: Must apply after changing axis xlim/ylim
 
     Parameters
     ----------
