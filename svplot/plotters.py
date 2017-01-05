@@ -10,10 +10,11 @@ Functions for common plots
 import seaborn as sns
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
 def violin_with_strip(x=None, y=None, hue=None, data=None,
-                      order=None, hue_order=None, ax=None):
+                      order=None, hue_order=None, orient='v', ax=None):
     """
     Plot stripplot with overlaying violin and box-and-whisker plot.
 
@@ -57,6 +58,17 @@ def violin_with_strip(x=None, y=None, hue=None, data=None,
     ax2 = sns.violinplot(x=x, y=y, hue=hue, data=data,
                          order=order, hue_order=hue_order, ax=ax2)
 
+    # Change the color of the internal box/whisker plot
+    for i, line in enumerate(ax2.lines):
+        # whiskers
+        if i % 2 == 0:
+            line.set_color('k')
+            #  line.set_linewidth(3)
+        # box
+        else:
+            line.set_color('k')
+            #  line.set_linewidth(7)
+
     # Turn off violinplot fill and change the outline color
     # Variant on https://github.com/mwaskom/seaborn/issues/979
     for collection in ax2.collections:
@@ -69,18 +81,8 @@ def violin_with_strip(x=None, y=None, hue=None, data=None,
 
         # PathCollections are data median
         if isinstance(collection, mpl.collections.PathCollection):
-            collection.set_edgecolor('k')
-            collection.set_linewidth(0.1)
+            collection.set_visible(False)
+            x, y = collection._offsets[0]
+            ax2.plot(x, y, 'ow', markersize=8, mew=1, mec='k')
 
-    # Change the color of the internal box/whisker plot
-    for i, line in enumerate(ax2.lines):
-        # whiskers
-        if i % 2 == 0:
-            line.set_color('k')
-            #  line.set_linewidth(3)
-        # box
-        else:
-            line.set_color('k')
-            #  line.set_linewidth(7)
-
-    return ax
+    return ax2
