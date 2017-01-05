@@ -39,7 +39,7 @@ def violin_with_strip(x=None, y=None, hue=None, data=None,
     # Plot the data points
     ax = sns.stripplot(x=x, y=y, hue=hue, data=data,
                        order=order, hue_order=hue_order,
-                       jitter=0.1, linewidth=0.5, edgecolor='k',
+                       jitter=0.2, linewidth=0.5, edgecolor='k', size=3.5,
                        ax=ax)
 
     # stripplot is always plotted over violinplot if on same
@@ -62,7 +62,8 @@ def violin_with_strip(x=None, y=None, hue=None, data=None,
     for collection in ax2.collections:
         # PolyCollections are violins
         if isinstance(collection, mpl.collections.PolyCollection):
-            collection.set_facecolor('none')
+            r, g, b, a = collection.get_facecolor()[0]
+            collection.set_facecolor((r, g, b, 0.2))
             collection.set_edgecolor('k')
             collection.set_linewidths(1.2)
 
