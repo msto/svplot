@@ -10,7 +10,6 @@ Functions for common plots
 import seaborn as sns
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import pandas as pd
 
 
 def violin_with_strip(x=None, y=None, hue=None, data=None,
@@ -38,28 +37,18 @@ def violin_with_strip(x=None, y=None, hue=None, data=None,
         ax = plt.gca()
 
     # Plot the data points
+    # zorder<3 required to plot beneath violinplot
     ax = sns.stripplot(x=x, y=y, hue=hue, data=data,
                        order=order, hue_order=hue_order,
                        jitter=0.2, linewidth=0.5, edgecolor='k', size=3.5,
-                       ax=ax)
-
-    # stripplot is always plotted over violinplot if on same
-    # axis, so make a new one atop the first
-    ax2 = ax.twinx()
-
-    # match the ylim as well as xlim
-    ax2.set_ylim(ax.get_ylim())
-
-    # Turn off grid lines across the axis so they don't
-    # overlay on stripplot, and disable duplicate y-axis labels
-    ax2.get_yaxis().set_visible(False)
+                       ax=ax, zorder=1)
 
     # Plot violins
-    ax2 = sns.violinplot(x=x, y=y, hue=hue, data=data,
-                         order=order, hue_order=hue_order, ax=ax2)
+    ax = sns.violinplot(x=x, y=y, hue=hue, data=data,
+                        order=order, hue_order=hue_order, ax=ax)
 
     # Change the color of the internal box/whisker plot
-    for i, line in enumerate(ax2.lines):
+    for i, line in enumerate(ax.lines):
         # whiskers
         if i % 2 == 0:
             line.set_color('k')
@@ -71,18 +60,21 @@ def violin_with_strip(x=None, y=None, hue=None, data=None,
 
     # Turn off violinplot fill and change the outline color
     # Variant on https://github.com/mwaskom/seaborn/issues/979
-    for collection in ax2.collections:
+    poly_obs = False
+    for collection in ax.collections:
         # PolyCollections are violins
         if isinstance(collection, mpl.collections.PolyCollection):
             r, g, b, a = collection.get_facecolor()[0]
             collection.set_facecolor((r, g, b, 0.3))
             collection.set_edgecolor('k')
             collection.set_linewidths(1.2)
+            poly_obs = True
 
-        # PathCollections are data median
-        if isinstance(collection, mpl.collections.PathCollection):
+        # First n PathCollections are stripplot points
+        # Subsequent PathCollections are data median
+        if isinstance(collection, mpl.collections.PathCollection) and poly_obs:
             collection.set_visible(False)
             x, y = collection._offsets[0]
-            ax2.plot(x, y, 'ow', markersize=8, mew=1, mec='k')
+            ax.plot(x, y, 'ow', markersize=8, mew=1, mec='k')
 
-    return ax2
+    return ax
