@@ -41,6 +41,7 @@ def violin_with_strip(x=None, y=None, hue=None, data=None,
     ax = sns.stripplot(x=x, y=y, hue=hue, data=data,
                        order=order, hue_order=hue_order,
                        jitter=0.2, linewidth=0.5, edgecolor='k', size=3.5,
+                       split=True,
                        ax=ax, zorder=1)
 
     # Plot violins
@@ -76,5 +77,14 @@ def violin_with_strip(x=None, y=None, hue=None, data=None,
             collection.set_visible(False)
             x, y = collection._offsets[0]
             ax.plot(x, y, 'ow', markersize=8, mew=1, mec='k')
+
+    # Remove stripplot legend
+    if hue is not None:
+        legend = ax.get_legend()
+        ax.legend_ = None
+        texts = [text.get_text() for text in legend.texts]
+        legend = ax.legend(legend.legendHandles[:2], texts,
+                           frameon=True, loc='best')
+        legend.get_frame().set_linewidth(1)
 
     return ax
