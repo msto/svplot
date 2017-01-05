@@ -75,7 +75,7 @@ def violin_with_strip(x=None, y=None, hue=None, data=None,
         # PolyCollections are violins
         if isinstance(collection, mpl.collections.PolyCollection):
             r, g, b, a = collection.get_facecolor()[0]
-            collection.set_facecolor((r, g, b, 0.2))
+            collection.set_facecolor((r, g, b, 0.3))
             collection.set_edgecolor('k')
             collection.set_linewidths(1.2)
 
