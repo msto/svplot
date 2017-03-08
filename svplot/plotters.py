@@ -119,6 +119,108 @@ def plot_svsize_distro(df, hue=None, hue_order=None, ax=None,
     return ax
 
 
+def _plot_vaf_cum(data, xticks, ax, label=None,
+                  color='k', linestyle='-', linewidth=2.5):
+
+    ys = []
+    for frac in xticks:
+        count = data.loc[data.vf <= frac].shape[0]
+        pct = count / data.shape[0]
+        ys.append(pct)
+
+    log_xticks = [np.log10(x) for x in xticks]
+    ax.plot(log_xticks, ys, label=label,
+            color=color, linewidth=linewidth, linestyle=linestyle)
+
+
+def _vaf_ticks(xmin=0.002, xmax=1):
+    step = 10 ** np.floor(np.log10(xmin))
+    first_max = step * 10
+    ticks = [np.arange(xmin, first_max, step)]
+
+    for i in np.arange(np.log10(first_max), np.log10(xmax)):
+        ticks.append(np.arange(10 ** i, 10 ** (i+1), 10 ** i))
+
+    ticks.append([xmax])
+    ticks = np.concatenate(ticks)
+    return ticks
+
+
+def _vaf_ticklabels(ticks):
+    ticklabels = []
+
+    # Label 10s and 5s
+    for tick in ticks:
+        y = tick * 10 ** np.abs(np.floor(np.log10(tick)))
+        if y == 1 or (y % 5 == 0):
+            pct = tick * 100
+            if pct >= 1:
+                label = '{0:d}%'.format(int(pct))
+            else:
+                prec = int(np.ceil(np.abs(np.log10(pct))))
+                label = '{:.{prec}f}%'.format(pct, prec=prec)
+            ticklabels.append(label)
+        else:
+            ticklabels.append('')
+
+    return ticklabels
+
+
+def plot_vaf_cum(df, hue=None, hue_order=None, ax=None,
+                 xmin=0.002, xmax=1,
+                 hue_dict=None, palette=None):
+    # Set defaults
+    if ax is None:
+        ax = plt.gca()
+    if palette is None:
+        palette = sns.color_palette('colorblind')
+
+    # Set log-scaled ticks for cum
+    xticks = _vaf_ticks(xmin, xmax)
+    log_xticks = [np.log10(x) for x in xticks]
+
+    # If no hue specified, plot size distribution of entire dataframe
+    if hue is None:
+        _plot_vaf_cum(df, xticks, ax, color=palette[0])
+
+    # If hue column specified, plot size distribution of each set and label
+    # appropriately
+    else:
+        hue_col = hue
+        if hue_order is None:
+            hue_order = sorted(df[hue_col].unique())
+            if len(hue_order) > len(palette):
+                raise Exception('Palette smaller than number of hue variables')
+
+        for i, hue_val in enumerate(hue_order):
+            if hue_dict is None:
+                label = str(hue_val)
+            else:
+                label = hue_dict[hue_val]
+
+            data = df.loc[df[hue_col] == hue_val]
+            _plot_vaf_cum(data, xticks, ax, label, color=palette[i])
+
+    # Set log-scaled xticks
+    ax.set_xticks(log_xticks)
+    ax.set_xlim(log_xticks[0], log_xticks[-1])
+    xticklabels = _vaf_ticklabels(xticks)
+    ax.set_xticklabels(xticklabels)
+
+    # Set y-scale to 0%, 25%, 50%, 75%, 100%
+    yticks = np.arange(0, 1.25, 0.25)
+    ax.set_ylim(0, 1)
+    ax.set_yticks(yticks)
+    ax.set_yticklabels(['{0}%'.format(int(x * 100)) for x in yticks])
+
+    # Add legend under curves
+    l = ax.legend(frameon=True, loc='lower right')
+    l.get_frame().set_linewidth(1)
+
+    ax.set_ylabel('Cumulative percentage of variants')
+    ax.set_xlabel('Variant allele frequency')
+
+
 def violin_with_strip(x=None, y=None, hue=None, data=None,
                       order=None, hue_order=None, orient='v', ax=None,
                       violin_kwargs={}):
