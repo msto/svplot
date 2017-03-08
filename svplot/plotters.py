@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 
 
 def violin_with_strip(x=None, y=None, hue=None, data=None,
-                      order=None, hue_order=None, orient='v', ax=None):
+                      order=None, hue_order=None, orient='v', ax=None,
+                      violin_kwargs={}):
     """
     Plot stripplot with overlaying violin and box-and-whisker plot.
 
@@ -46,7 +47,8 @@ def violin_with_strip(x=None, y=None, hue=None, data=None,
 
     # Plot violins
     ax = sns.violinplot(x=x, y=y, hue=hue, data=data,
-                        order=order, hue_order=hue_order, ax=ax)
+                        order=order, hue_order=hue_order, ax=ax,
+                        **violin_kwargs)
 
     # Change the color of the internal box/whisker plot
     for i, line in enumerate(ax.lines):
@@ -76,7 +78,7 @@ def violin_with_strip(x=None, y=None, hue=None, data=None,
         if isinstance(collection, mpl.collections.PathCollection) and poly_obs:
             collection.set_visible(False)
             x, y = collection._offsets[0]
-            ax.plot(x, y, 'ow', markersize=8, mew=1, mec='k')
+            ax.plot(x, y, 'ow', markersize=7, mew=1, mec='k')
 
     # Remove stripplot legend
     if hue is not None:
